@@ -70,23 +70,57 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     },
                      event::KeyCode::Char(c) => {
-                        match app.screen {
-                            AppScreen::SubstanceSearch => {
-                                app.substance_search_query.push(c);
-                                app.update_filtered_substances();
-                            }
-                            AppScreen::ExperienceLogging => {
-                                if let Some(form) = app.experience_form.as_mut() {
-                                    match form.field_index {
-                                        0 => form.title.push(c),
-                                        1 => form.date.push(c),
-                                        2 => form.substance.push(c),
-                                        3 => form.notes.push(c),
-                                        _ => {}
+                        match c {
+                            '1' => app.screen = AppScreen::Journal,
+                            '2' => app.screen = AppScreen::SubstanceSearch,
+                            '3' => {
+                                app.screen = AppScreen::ExperienceLogging;
+                                if app.experience_form.is_none() {
+                                    app.experience_form = Some(app::ExperienceForm::new());
+                                }
+                            },
+                            'n' => {
+                                if let AppScreen::Journal = app.screen {
+                                    app.screen = AppScreen::ExperienceLogging;
+                                    app.experience_form = Some(app::ExperienceForm::new());
+                                }
+                            },
+                            'f' => {
+                                if let AppScreen::Journal = app.screen {
+                                    if let Some(entry) = app.journal_entries.get_mut(app.selected_journal_index) {
+                                        entry.is_favorite = !entry.is_favorite;
                                     }
                                 }
+                            },
+                            'd' => {
+                                if let AppScreen::Journal = app.screen {
+                                    if app.journal_entries.len() > 0 {
+                                        app.journal_entries.remove(app.selected_journal_index);
+                                        if app.selected_journal_index >= app.journal_entries.len() && app.selected_journal_index > 0 {
+                                            app.selected_journal_index -= 1;
+                                        }
+                                    }
+                                }
+                            },
+                            'h' => app.screen = AppScreen::Home,
+                            _ => match app.screen {
+                                AppScreen::SubstanceSearch => {
+                                    app.substance_search_query.push(c);
+                                    app.update_filtered_substances();
+                                }
+                                AppScreen::ExperienceLogging => {
+                                    if let Some(form) = app.experience_form.as_mut() {
+                                        match form.field_index {
+                                            0 => form.title.push(c),
+                                            1 => form.date.push(c),
+                                            2 => form.substance.push(c),
+                                            3 => form.notes.push(c),
+                                            _ => {}
+                                        }
+                                    }
+                                }
+                                _ => {}
                             }
-                            _ => {}
                         }
                     },
                      event::KeyCode::Backspace => {
@@ -109,10 +143,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             _ => {}
                         }
                     },
-                    event::KeyCode::Esc => {
-                        if let AppScreen::SubstanceSearch = app.screen {
-                            app.substance_search_query.clear();
-                            app.update_filtered_substances();
+                     event::KeyCode::Esc => {
+                        match app.screen {
+                            AppScreen::SubstanceSearch => {
+                                app.substance_search_query.clear();
+                                app.update_filtered_substances();
+                            }
+                            _ => {
+                                app.screen = AppScreen::Home;
+                            }
                         }
                     },
                     _ => {}
