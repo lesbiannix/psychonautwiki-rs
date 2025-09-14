@@ -8,16 +8,57 @@ pub enum AppScreen {
     SubstanceSearch,
 }
 
+use crate::models::experience::Experience;
+use ratatui::widgets::ListState;
+
 pub struct App {
     pub screen: AppScreen,
     pub running: bool,
+    pub journal_entries: Vec<Experience>,
+    pub selected_journal_index: usize,
 }
+
 
 impl App {
     pub fn new() -> Self {
+        use chrono::Utc;
+        use crate::models::experience::Experience;
         Self {
             screen: AppScreen::Home,
             running: true,
+            journal_entries: vec![
+                Experience {
+                    id: "1".to_string(),
+                    is_favorite: false,
+                    title: "First LSD Experience".to_string(),
+                    first_ingestion_time: Utc::now(),
+                    notes: "A profound journey.".to_string(),
+                    location_name: "Home".to_string(),
+                    is_current_experience: false,
+                    ingestion_elements: vec![],
+                    cumulative_doses: vec![],
+                    interactions: vec![],
+                    ratings: vec![],
+                    timed_notes: vec![],
+                    consumers_with_ingestions: vec![],
+                },
+                Experience {
+                    id: "2".to_string(),
+                    is_favorite: true,
+                    title: "Psilocybin Adventure".to_string(),
+                    first_ingestion_time: Utc::now(),
+                    notes: "Lots of visuals.".to_string(),
+                    location_name: "Forest".to_string(),
+                    is_current_experience: false,
+                    ingestion_elements: vec![],
+                    cumulative_doses: vec![],
+                    interactions: vec![],
+                    ratings: vec![],
+                    timed_notes: vec![],
+                    consumers_with_ingestions: vec![],
+                },
+            ],
+            selected_journal_index: 0,
         }
     }
 
@@ -38,13 +79,29 @@ impl App {
     }
 }
 
-pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &App) {
+pub fn draw_ui(f: &mut Frame, app: &App) {
     let block = Block::default().borders(Borders::ALL).title("PsychonautWiki Journal");
-    let text = match app.screen {
-        AppScreen::Home => "Home Screen",
-        AppScreen::Journal => "Journal Screen",
-        AppScreen::SubstanceSearch => "Substance Search Screen",
-    };
-    let paragraph = Paragraph::new(text).block(block);
-    f.render_widget(paragraph, f.size());
+    match app.screen {
+        AppScreen::Home => {
+            let paragraph = Paragraph::new("Home Screen").block(block);
+            f.render_widget(paragraph, f.size());
+        }
+        AppScreen::Journal => {
+            let items: Vec<ListItem> = app.journal_entries.iter().map(|e| {
+                ListItem::new(e.title.clone())
+            }).collect();
+            let mut state = ListState::default();
+            state.select(Some(app.selected_journal_index));
+            let list = List::new(items)
+                .block(block)
+                .highlight_style(Style::default().bg(Color::Blue).fg(Color::White))
+                .highlight_symbol("→ ");
+            f.render_stateful_widget(list, f.size(), &mut state);
+        }
+        AppScreen::SubstanceSearch => {
+            let paragraph = Paragraph::new("Substance Search Screen").block(block);
+            f.render_widget(paragraph, f.size());
+        }
+    }
 }
+

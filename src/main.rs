@@ -24,6 +24,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     event::KeyCode::Char('q') => break,
                     event::KeyCode::Right | event::KeyCode::Tab => app.next_screen(),
                     event::KeyCode::Left => app.prev_screen(),
+                    event::KeyCode::Down => {
+                        if let AppScreen::Journal = app.screen {
+                            if app.selected_journal_index + 1 < app.journal_entries.len() {
+                                app.selected_journal_index += 1;
+                            }
+                        }
+                    },
+                    event::KeyCode::Up => {
+                        if let AppScreen::Journal = app.screen {
+                            if app.selected_journal_index > 0 {
+                                app.selected_journal_index -= 1;
+                            }
+                        }
+                    },
                     _ => {}
                 }
             }

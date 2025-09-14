@@ -10,10 +10,10 @@
 - src/app.rs, src/main.rs (TUI shell)
 
 **Last Completed Task:**
-- Set up TUI framework and basic navigation shell
+- Tested and committed TUI shell and progress updates
 
 **Current Task:**
-- Test and document TUI shell
+- Ready to implement journal list UI and navigation
 
 **Temporary Changes/Experiments:**
 - None

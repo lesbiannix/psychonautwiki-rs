@@ -1,32 +1,33 @@
 {
-  description = "PsychonautWiki Journal TUI";
+  description = "PsychonautWiki Journal Rust TUI - Nix Flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
     rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
-  outputs = { self, nixpkgs, rust-overlay }:
-    let
-      system = "x86_64-linux";
-      overlays = [ rust-overlay.overlays.default ];
-      pkgs = import nixpkgs { inherit system overlays; };
-    in {
-      devShells.x86_64-linux.default = pkgs.mkShell {
-        buildInputs = [
-          pkgs.rust-bin.stable.latest.default
-          pkgs.pkg-config
-          pkgs.openssl
-        ];
-        RUST_SRC_PATH = "${pkgs.rust-bin.stable.latest.default}/lib/rustlib/src/rust/library";
-      };
-      packages.x86_64-linux.default = pkgs.rustPlatform.buildRustPackage {
-        pname = "psychonautwiki-rs";
-        version = "0.1.0";
-        src = ./.;
-        cargoLock = {
-          lockFile = ./Cargo.lock;
+  outputs = { self, nixpkgs, flake-utils, rust-overlay }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        overlays = [ (import rust-overlay) ];
+        pkgs = import nixpkgs { inherit system overlays; };
+        rustToolchain = pkgs.rust-bin.stable.latest.default;
+      in {
+        devShells.default = pkgs.mkShell {
+          buildInputs = [ rustToolchain pkgs.pkg-config pkgs.openssl ];
+          shellHook = ''
+            export CARGO_TERM_COLOR=always
+          '';
         };
-      };
-    };
+        packages.default = pkgs.rustPlatform.buildRustPackage {
+          pname = "psychonaut-rs";
+          version = "0.1.0";
+          src = ./.;
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+          };
+        };
+      }
+    );
 }
