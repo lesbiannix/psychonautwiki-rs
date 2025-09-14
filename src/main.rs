@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     event::KeyCode::Char('q') => break,
                     event::KeyCode::Right | event::KeyCode::Tab => app.next_screen(),
                     event::KeyCode::Left => app.prev_screen(),
-                     event::KeyCode::Down => {
+                    event::KeyCode::Down | event::KeyCode::Tab => {
                         match app.screen {
                             AppScreen::Journal => {
                                 if app.selected_journal_index + 1 < app.journal_entries.len() {
@@ -39,15 +39,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             }
                             AppScreen::ExperienceLogging => {
                                 if let Some(form) = app.experience_form.as_mut() {
-                                    if form.field_index < 3 {
-                                        form.field_index += 1;
-                                    }
+                                    form.field_index = (form.field_index + 1) % 4;
                                 }
                             }
                             _ => {}
                         }
                     },
-                     event::KeyCode::Up => {
+                    event::KeyCode::Up => {
                         match app.screen {
                             AppScreen::Journal => {
                                 if app.selected_journal_index > 0 {
@@ -61,12 +59,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             }
                             AppScreen::ExperienceLogging => {
                                 if let Some(form) = app.experience_form.as_mut() {
-                                    if form.field_index > 0 {
+                                    if form.field_index == 0 {
+                                        form.field_index = 3;
+                                    } else {
                                         form.field_index -= 1;
                                     }
                                 }
                             }
                             _ => {}
+                        }
+                    },
+                    event::KeyCode::BackTab => {
+                        if let AppScreen::ExperienceLogging = app.screen {
+                            if let Some(form) = app.experience_form.as_mut() {
+                                if form.field_index == 0 {
+                                    form.field_index = 3;
+                                } else {
+                                    form.field_index -= 1;
+                                }
+                            }
                         }
                     },
                      event::KeyCode::Char(c) => {
@@ -123,6 +134,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             }
                         }
                     },
+                    event::KeyCode::Enter => {
+                        if let AppScreen::ExperienceLogging = app.screen {
+                            if let Some(form) = app.experience_form.take() {
+                                use chrono::Utc;
+                                use crate::models::experience::Experience;
+                                app.journal_entries.push(Experience {
+                                    id: (app.journal_entries.len() + 1).to_string(),
+                                    is_favorite: false,
+                                    title: form.title,
+                                    first_ingestion_time: Utc::now(),
+                                    notes: form.notes,
+                                    location_name: String::from(""),
+                                    is_current_experience: false,
+                                    ingestion_elements: vec![],
+                                    cumulative_doses: vec![],
+                                    interactions: vec![],
+                                    ratings: vec![],
+                                    timed_notes: vec![],
+                                    consumers_with_ingestions: vec![],
+                                });
+                                app.screen = AppScreen::Journal;
+                            }
+                        }
+                    },
                      event::KeyCode::Backspace => {
                         match app.screen {
                             AppScreen::SubstanceSearch => {
@@ -148,6 +183,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             AppScreen::SubstanceSearch => {
                                 app.substance_search_query.clear();
                                 app.update_filtered_substances();
+                            }
+                            AppScreen::ExperienceLogging => {
+                                app.experience_form = None;
+                                app.screen = AppScreen::Journal;
                             }
                             _ => {
                                 app.screen = AppScreen::Home;

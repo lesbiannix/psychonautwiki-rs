@@ -285,19 +285,32 @@ pub fn draw_ui(f: &mut Frame, app: &App) {
         AppScreen::ExperienceLogging => {
             let form = app.experience_form.as_ref().unwrap();
             let fields = [
-                ("Title", &form.title),
-                ("Date", &form.date),
-                ("Substance", &form.substance),
-                ("Notes", &form.notes),
+                ("📝 Title", &form.title),
+                ("📅 Date", &form.date),
+                ("💊 Substance", &form.substance),
+                ("🗒️ Notes", &form.notes),
             ];
             let mut items: Vec<ListItem> = fields.iter().enumerate().map(|(i, (label, value))| {
-                let prefix = if i == form.field_index { "→ " } else { "  " };
+                let prefix = if i == form.field_index { "👉 " } else { "   " };
                 ListItem::new(format!("{}{}: {}", prefix, label, value))
             }).collect();
             let list = List::new(items)
-                .block(Block::default().borders(Borders::ALL).title("Log New Experience (Tab to move, Enter to save, Esc to cancel)"))
+                .block(Block::default().borders(Borders::ALL).title("✨ Log New Experience (Tab ↹ to move, Enter ⏎ to save, Esc ⎋ to cancel) ✨"))
                 .highlight_style(Style::default().bg(Color::Blue).fg(Color::White));
-            f.render_widget(list, f.size());
+            // Layout: form (top), help (bottom)
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    Constraint::Min(7),
+                    Constraint::Length(2),
+                ].as_ref())
+                .split(f.size());
+            f.render_widget(list, chunks[0]);
+            // Help bar with emojis
+            let help = Paragraph::new("Tab ↹: Next field | Shift+Tab: Prev field | Enter ⏎: Save | Esc ⎋: Cancel | 🏠: Home | q: Quit")
+                .style(Style::default().fg(Color::DarkGray))
+                .block(Block::default().borders(Borders::ALL).title("🆘 Help"));
+            f.render_widget(help, chunks[1]);
         }
             // Input box for search query
             let input = Paragraph::new(app.substance_search_query.as_str())
