@@ -10,13 +10,14 @@
 - src/app.rs, src/main.rs (TUI shell)
 
 **Last Completed Task:**
-- Repo cleanup: added .gitignore, removed tracked build artifacts (target/, result/)
+- Refactored persistence.rs for robust JSON save/load (error handling, atomic writes)
+- Updated persistence tests for Result-based API
+- Documented NixOS/flake usage in ai/README.md
 - All changes committed and pushed
 
 **Current Task:**
-- Refactor persistence.rs for robust JSON save/load (error handling, atomic writes)
-- Integrate persistence with TUI (status bar feedback)
-- Prepare for persistence tests and documentation
+- Integrate persistence error/status feedback into TUI (status bar, user messages)
+- Prepare for further TUI navigation and UI improvements
 
 **Temporary Changes/Experiments:**
 - None
