@@ -7,12 +7,13 @@
 - ../psychonautwiki-journal-android/ (original app for reference)
 - Cargo.toml, flake.nix (Rust project setup)
 - src/models/ (core data models)
+- src/app.rs, src/main.rs (TUI shell)
 
 **Last Completed Task:**
-- Implemented core data models in Rust
+- Set up TUI framework and basic navigation shell
 
 **Current Task:**
-- Review and document data model implementation
+- Test and document TUI shell
 
 **Temporary Changes/Experiments:**
 - None

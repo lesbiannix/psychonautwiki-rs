@@ -6,3 +6,4 @@
 - ✅ 2025-09-14: Planned initial Rust project structure and dependencies
 - ✅ 2025-09-14: Initialized Rust project and Nix flake
 - ✅ 2025-09-14: Implemented core data models in Rust
+- ✅ 2025-09-14: Set up TUI framework and basic navigation shell
