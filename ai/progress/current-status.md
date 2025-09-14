@@ -10,10 +10,13 @@
 - src/app.rs, src/main.rs (TUI shell)
 
 **Last Completed Task:**
-- Tested and committed TUI shell and progress updates
+- Repo cleanup: added .gitignore, removed tracked build artifacts (target/, result/)
+- All changes committed and pushed
 
 **Current Task:**
-- Ready to implement journal list UI and navigation
+- Refactor persistence.rs for robust JSON save/load (error handling, atomic writes)
+- Integrate persistence with TUI (status bar feedback)
+- Prepare for persistence tests and documentation
 
 **Temporary Changes/Experiments:**
 - None

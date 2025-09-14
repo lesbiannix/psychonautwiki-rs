@@ -47,3 +47,10 @@ clap = { version = "4.0", features = ["derive"] }
 - Optionally add SQLite support (e.g., rusqlite) if needed
 - TUI navigation and keyboard shortcuts via ratatui/crossterm
 - All session management and progress tracking in ai/
+
+### Persistence Approach (2025-09-14)
+- Use JSON for persistence (journal_entries.json, substances.json) for simplicity and transparency
+- Refactor persistence.rs to remove unwraps, add error handling, and use atomic writes (write to temp file, then rename)
+- Integrate persistence errors and status into TUI (status bar feedback)
+- Add tests for save/load, including error/corruption cases
+- SQLite can be considered in the future if data/query needs grow
