@@ -15,6 +15,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     let mut app = App::new();
+    app.update_filtered_substances();
 
     loop {
         terminal.draw(|f| draw_ui(f, &app))?;
@@ -25,17 +26,51 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     event::KeyCode::Right | event::KeyCode::Tab => app.next_screen(),
                     event::KeyCode::Left => app.prev_screen(),
                     event::KeyCode::Down => {
-                        if let AppScreen::Journal = app.screen {
-                            if app.selected_journal_index + 1 < app.journal_entries.len() {
-                                app.selected_journal_index += 1;
+                        match app.screen {
+                            AppScreen::Journal => {
+                                if app.selected_journal_index + 1 < app.journal_entries.len() {
+                                    app.selected_journal_index += 1;
+                                }
                             }
+                            AppScreen::SubstanceSearch => {
+                                if app.selected_substance_index + 1 < app.filtered_substances.len() {
+                                    app.selected_substance_index += 1;
+                                }
+                            }
+                            _ => {}
                         }
                     },
                     event::KeyCode::Up => {
-                        if let AppScreen::Journal = app.screen {
-                            if app.selected_journal_index > 0 {
-                                app.selected_journal_index -= 1;
+                        match app.screen {
+                            AppScreen::Journal => {
+                                if app.selected_journal_index > 0 {
+                                    app.selected_journal_index -= 1;
+                                }
                             }
+                            AppScreen::SubstanceSearch => {
+                                if app.selected_substance_index > 0 {
+                                    app.selected_substance_index -= 1;
+                                }
+                            }
+                            _ => {}
+                        }
+                    },
+                    event::KeyCode::Char(c) => {
+                        if let AppScreen::SubstanceSearch = app.screen {
+                            app.substance_search_query.push(c);
+                            app.update_filtered_substances();
+                        }
+                    },
+                    event::KeyCode::Backspace => {
+                        if let AppScreen::SubstanceSearch = app.screen {
+                            app.substance_search_query.pop();
+                            app.update_filtered_substances();
+                        }
+                    },
+                    event::KeyCode::Esc => {
+                        if let AppScreen::SubstanceSearch = app.screen {
+                            app.substance_search_query.clear();
+                            app.update_filtered_substances();
                         }
                     },
                     _ => {}
