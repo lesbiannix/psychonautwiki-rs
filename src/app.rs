@@ -1,5 +1,6 @@
 use ratatui::{prelude::*, widgets::*};
 use crossterm::event::{self, Event, KeyCode};
+mod persistence;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AppScreen {
@@ -69,12 +70,12 @@ impl ExperienceForm {
 
 impl App {
     pub fn new() -> Self {
-        use chrono::Utc;
-        use crate::models::experience::Experience;
-        Self {
-            screen: AppScreen::Home,
-            running: true,
-            journal_entries: vec![
+        use crate::persistence::{load_journal_entries, load_substances};
+        let mut journal_entries = load_journal_entries();
+        if journal_entries.is_empty() {
+            use chrono::Utc;
+            use crate::models::experience::Experience;
+            journal_entries = vec![
                 Experience {
                     id: "1".to_string(),
                     is_favorite: false,
@@ -105,9 +106,11 @@ impl App {
                     timed_notes: vec![],
                     consumers_with_ingestions: vec![],
                 },
-            ],
-            selected_journal_index: 0,
-            substances: vec![
+            ];
+        }
+        let mut substances = load_substances();
+        if substances.is_empty() {
+            substances = vec![
                 Substance {
                     name: "LSD".to_string(),
                     common_names: vec!["Acid".to_string()],
@@ -132,7 +135,14 @@ impl App {
                     dose_units: vec!["mg".to_string()],
                     default_route: Some("Oral".to_string()),
                 },
-            ],
+            ];
+        }
+        Self {
+            screen: AppScreen::Home,
+            running: true,
+            journal_entries,
+            selected_journal_index: 0,
+            substances,
             substance_search_query: String::new(),
             filtered_substances: vec![],
             selected_substance_index: 0,
