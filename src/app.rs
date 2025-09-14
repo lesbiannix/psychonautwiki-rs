@@ -235,7 +235,52 @@ pub fn draw_ui(f: &mut Frame, app: &App) {
             f.render_widget(help, help_area[1]);
         }
         AppScreen::SubstanceSearch => {
-            // ... existing code ...
+            // Layout: input (top), list (middle), details (bottom), help (footer)
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(1)
+                .constraints([
+                    Constraint::Length(3),   // input
+                    Constraint::Min(5),      // list
+                    Constraint::Length(7),   // details
+                    Constraint::Length(2),   // help
+                ].as_ref())
+                .split(f.size());
+
+            // Input box for search query
+            let input = Paragraph::new(app.substance_search_query.as_str())
+                .block(Block::default().borders(Borders::ALL).title("Search Substance (type to filter, Esc to clear)"));
+            f.render_widget(input, chunks[0]);
+
+            // Filtered substance list
+            let items: Vec<ListItem> = app.filtered_substances.iter().map(|s| {
+                ListItem::new(s.name.clone())
+            }).collect();
+            let mut state = ListState::default();
+            state.select(if app.filtered_substances.is_empty() { None } else { Some(app.selected_substance_index) });
+            let list = List::new(items)
+                .block(Block::default().borders(Borders::ALL).title("Results (↑↓ to navigate, Enter to select)"))
+                .highlight_style(Style::default().bg(Color::Blue).fg(Color::White))
+                .highlight_symbol("→ ");
+            f.render_stateful_widget(list, chunks[1], &mut state);
+
+            // Substance details
+            let details = app.filtered_substances.get(app.selected_substance_index)
+                .map(|s| format!("{}\nClass: {}\n{}",
+                    s.name,
+                    s.class.clone().unwrap_or_default(),
+                    s.description.clone().unwrap_or_default()
+                ))
+                .unwrap_or_else(|| "No substance selected".to_string());
+            let details_paragraph = Paragraph::new(details)
+                .block(Block::default().borders(Borders::ALL).title("Details"));
+            f.render_widget(details_paragraph, chunks[2]);
+
+            // Help bar (footer)
+            let help = Paragraph::new("Tab/→: Next screen | ←: Prev screen | ↑↓: Navigate | Enter: Select | Esc: Clear | q: Quit")
+                .style(Style::default().fg(Color::DarkGray))
+                .block(Block::default().borders(Borders::ALL).title("Help"));
+            f.render_widget(help, chunks[3]);
         }
         AppScreen::ExperienceLogging => {
             let form = app.experience_form.as_ref().unwrap();
