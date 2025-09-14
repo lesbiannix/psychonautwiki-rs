@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     event::KeyCode::Char('q') => break,
                     event::KeyCode::Right | event::KeyCode::Tab => app.next_screen(),
                     event::KeyCode::Left => app.prev_screen(),
-                    event::KeyCode::Down => {
+                     event::KeyCode::Down => {
                         match app.screen {
                             AppScreen::Journal => {
                                 if app.selected_journal_index + 1 < app.journal_entries.len() {
@@ -37,10 +37,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     app.selected_substance_index += 1;
                                 }
                             }
+                            AppScreen::ExperienceLogging => {
+                                if let Some(form) = app.experience_form.as_mut() {
+                                    if form.field_index < 3 {
+                                        form.field_index += 1;
+                                    }
+                                }
+                            }
                             _ => {}
                         }
                     },
-                    event::KeyCode::Up => {
+                     event::KeyCode::Up => {
                         match app.screen {
                             AppScreen::Journal => {
                                 if app.selected_journal_index > 0 {
@@ -52,19 +59,54 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     app.selected_substance_index -= 1;
                                 }
                             }
+                            AppScreen::ExperienceLogging => {
+                                if let Some(form) = app.experience_form.as_mut() {
+                                    if form.field_index > 0 {
+                                        form.field_index -= 1;
+                                    }
+                                }
+                            }
                             _ => {}
                         }
                     },
-                    event::KeyCode::Char(c) => {
-                        if let AppScreen::SubstanceSearch = app.screen {
-                            app.substance_search_query.push(c);
-                            app.update_filtered_substances();
+                     event::KeyCode::Char(c) => {
+                        match app.screen {
+                            AppScreen::SubstanceSearch => {
+                                app.substance_search_query.push(c);
+                                app.update_filtered_substances();
+                            }
+                            AppScreen::ExperienceLogging => {
+                                if let Some(form) = app.experience_form.as_mut() {
+                                    match form.field_index {
+                                        0 => form.title.push(c),
+                                        1 => form.date.push(c),
+                                        2 => form.substance.push(c),
+                                        3 => form.notes.push(c),
+                                        _ => {}
+                                    }
+                                }
+                            }
+                            _ => {}
                         }
                     },
-                    event::KeyCode::Backspace => {
-                        if let AppScreen::SubstanceSearch = app.screen {
-                            app.substance_search_query.pop();
-                            app.update_filtered_substances();
+                     event::KeyCode::Backspace => {
+                        match app.screen {
+                            AppScreen::SubstanceSearch => {
+                                app.substance_search_query.pop();
+                                app.update_filtered_substances();
+                            }
+                            AppScreen::ExperienceLogging => {
+                                if let Some(form) = app.experience_form.as_mut() {
+                                    match form.field_index {
+                                        0 => { form.title.pop(); },
+                                        1 => { form.date.pop(); },
+                                        2 => { form.substance.pop(); },
+                                        3 => { form.notes.pop(); },
+                                        _ => {}
+                                    }
+                                }
+                            }
+                            _ => {}
                         }
                     },
                     event::KeyCode::Esc => {

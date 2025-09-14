@@ -6,12 +6,21 @@ pub enum AppScreen {
     Home,
     Journal,
     SubstanceSearch,
+    ExperienceLogging,
 }
 
 use crate::models::experience::Experience;
 use ratatui::widgets::ListState;
 
 use crate::models::substance::Substance;
+
+pub struct ExperienceForm {
+    pub title: String,
+    pub date: String,
+    pub substance: String,
+    pub notes: String,
+    pub field_index: usize, // 0=title, 1=date, 2=substance, 3=notes
+}
 
 pub struct App {
     pub screen: AppScreen,
@@ -22,6 +31,7 @@ pub struct App {
     pub substance_search_query: String,
     pub filtered_substances: Vec<Substance>,
     pub selected_substance_index: usize,
+    pub experience_form: Option<ExperienceForm>,
 }
 
 impl App {
@@ -44,6 +54,18 @@ impl App {
 }
 
 
+
+impl ExperienceForm {
+    pub fn new() -> Self {
+        Self {
+            title: String::new(),
+            date: String::new(),
+            substance: String::new(),
+            notes: String::new(),
+            field_index: 0,
+        }
+    }
+}
 
 impl App {
     pub fn new() -> Self {
@@ -114,6 +136,7 @@ impl App {
             substance_search_query: String::new(),
             filtered_substances: vec![],
             selected_substance_index: 0,
+            experience_form: None,
         }
     }
 
@@ -154,6 +177,25 @@ pub fn draw_ui(f: &mut Frame, app: &App) {
             f.render_stateful_widget(list, f.size(), &mut state);
         }
         AppScreen::SubstanceSearch => {
+            // ... existing code ...
+        }
+        AppScreen::ExperienceLogging => {
+            let form = app.experience_form.as_ref().unwrap();
+            let fields = [
+                ("Title", &form.title),
+                ("Date", &form.date),
+                ("Substance", &form.substance),
+                ("Notes", &form.notes),
+            ];
+            let mut items: Vec<ListItem> = fields.iter().enumerate().map(|(i, (label, value))| {
+                let prefix = if i == form.field_index { "→ " } else { "  " };
+                ListItem::new(format!("{}{}: {}", prefix, label, value))
+            }).collect();
+            let list = List::new(items)
+                .block(Block::default().borders(Borders::ALL).title("Log New Experience (Tab to move, Enter to save, Esc to cancel)"))
+                .highlight_style(Style::default().bg(Color::Blue).fg(Color::White));
+            f.render_widget(list, f.size());
+        }
             // Input box for search query
             let input = Paragraph::new(app.substance_search_query.as_str())
                 .block(Block::default().borders(Borders::ALL).title("Search Substance"));
