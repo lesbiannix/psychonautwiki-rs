@@ -175,16 +175,64 @@ pub fn draw_ui(f: &mut Frame, app: &App) {
             f.render_widget(paragraph, f.size());
         }
         AppScreen::Journal => {
-            let items: Vec<ListItem> = app.journal_entries.iter().map(|e| {
-                ListItem::new(e.title.clone())
+            // Split horizontally: left (list), right (details)
+            let chunks = Layout::default()
+                .direction(Direction::Horizontal)
+                .margin(1)
+                .constraints([
+                    Constraint::Percentage(35),
+                    Constraint::Percentage(65),
+                ].as_ref())
+                .split(f.size());
+
+            // Journal entry list (left)
+            let items: Vec<ListItem> = app.journal_entries.iter().enumerate().map(|(i, e)| {
+                let mut title = e.title.clone();
+                if e.is_favorite {
+                    title = format!("★ {}", title);
+                }
+                if e.is_current_experience {
+                    title = format!("● {}", title);
+                }
+                ListItem::new(title)
             }).collect();
             let mut state = ListState::default();
-            state.select(Some(app.selected_journal_index));
+            state.select(if app.journal_entries.is_empty() { None } else { Some(app.selected_journal_index) });
             let list = List::new(items)
-                .block(block)
+                .block(Block::default().borders(Borders::ALL).title("Journal Entries (↑↓ to navigate, n: new, f: favorite, d: delete)"))
                 .highlight_style(Style::default().bg(Color::Blue).fg(Color::White))
                 .highlight_symbol("→ ");
-            f.render_stateful_widget(list, f.size(), &mut state);
+            f.render_stateful_widget(list, chunks[0], &mut state);
+
+            // Details pane (right)
+            let details = if let Some(entry) = app.journal_entries.get(app.selected_journal_index) {
+                format!(
+                    "Title: {}\nDate: {}\nLocation: {}\nFavorite: {}\n\nNotes:\n{}",
+                    entry.title,
+                    entry.first_ingestion_time.format("%Y-%m-%d %H:%M").to_string(),
+                    entry.location_name,
+                    if entry.is_favorite { "Yes" } else { "No" },
+                    entry.notes
+                )
+            } else {
+                "No journal entry selected.".to_string()
+            };
+            let details_paragraph = Paragraph::new(details)
+                .block(Block::default().borders(Borders::ALL).title("Entry Details"));
+            f.render_widget(details_paragraph, chunks[1]);
+
+            // Help bar (bottom)
+            let help = Paragraph::new("Tab/→: Next screen | ←: Prev screen | n: New | f: Favorite | d: Delete | q: Quit")
+                .style(Style::default().fg(Color::DarkGray))
+                .block(Block::default().borders(Borders::ALL).title("Help"));
+            let help_area = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    Constraint::Min(0),
+                    Constraint::Length(2),
+                ].as_ref())
+                .split(f.size());
+            f.render_widget(help, help_area[1]);
         }
         AppScreen::SubstanceSearch => {
             // ... existing code ...
