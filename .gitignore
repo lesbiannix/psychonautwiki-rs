@@ -1,0 +1,17 @@
+# Rust build
+/target/
+
+# Nix build
+/result/
+
+# Editor/IDE
+*.swp
+*.swo
+*.bak
+*.rs.bk
+.idea/
+.vscode/
+.DS_Store
+
+# By default, do not ignore tests/ (remove if you want to ignore it)
+# /tests/
