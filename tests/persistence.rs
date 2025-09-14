@@ -21,8 +21,8 @@ fn test_journal_persistence() {
         timed_notes: vec![],
         consumers_with_ingestions: vec![],
     };
-    save_journal_entries(&[exp.clone()]);
-    let loaded = load_journal_entries();
+    save_journal_entries(&[exp.clone()]).expect("save_journal_entries should succeed");
+    let loaded = load_journal_entries().expect("load_journal_entries should succeed");
     assert_eq!(loaded[0].id, "persist1");
     fs::remove_file("journal_entries.json").unwrap();
 }
@@ -37,8 +37,8 @@ fn test_substance_persistence() {
         dose_units: vec!["mg".to_string()],
         default_route: Some("Oral".to_string()),
     };
-    save_substances(&[sub.clone()]);
-    let loaded = load_substances();
+    save_substances(&[sub.clone()]).expect("save_substances should succeed");
+    let loaded = load_substances().expect("load_substances should succeed");
     assert_eq!(loaded[0].name, "PersistSub");
     fs::remove_file("substances.json").unwrap();
 }

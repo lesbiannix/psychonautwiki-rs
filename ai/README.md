@@ -13,3 +13,6 @@ This directory contains all files related to AI-assisted development, session re
 - Before each session, review `progress/current-status.md` and `progress/next-steps.md`.
 - After each significant change, update progress files and save session context in `prompts/`.
 - Commit changes with `📝 Update progress tracking`.
+
+## Host Environment
+- The development host is always NixOS and can use the provided flake (flake.nix) for reproducible builds and development environments.
