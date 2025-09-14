@@ -16,6 +16,7 @@ pub struct Experience {
     pub first_ingestion_time: DateTime<Utc>,
     pub notes: String,
     pub location_name: String,
+    pub category: Option<String>,
     pub is_current_experience: bool,
     pub ingestion_elements: Vec<Ingestion>,
     pub cumulative_doses: Vec<CumulativeDose>,

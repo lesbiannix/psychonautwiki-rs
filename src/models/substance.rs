@@ -8,4 +8,5 @@ pub struct Substance {
     pub description: Option<String>,
     pub dose_units: Vec<String>,
     pub default_route: Option<String>,
+    pub category: Option<String>,
 }

@@ -1,6 +1,5 @@
 use ratatui::{prelude::*, widgets::*};
 use crossterm::event::{self, Event, KeyCode};
-mod persistence;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AppScreen {
@@ -33,6 +32,7 @@ pub struct App {
     pub filtered_substances: Vec<Substance>,
     pub selected_substance_index: usize,
     pub experience_form: Option<ExperienceForm>,
+    pub status_message: String,
 }
 
 impl App {
@@ -54,8 +54,6 @@ impl App {
     }
 }
 
-
-
 impl ExperienceForm {
     pub fn new() -> Self {
         Self {
@@ -70,8 +68,7 @@ impl ExperienceForm {
 
 impl App {
     pub fn new() -> Self {
-        use crate::persistence::{load_journal_entries, load_substances};
-        let mut journal_entries = load_journal_entries();
+        let mut journal_entries = crate::persistence::load_journal_entries();
         if journal_entries.is_empty() {
             use chrono::Utc;
             use crate::models::experience::Experience;
@@ -108,7 +105,7 @@ impl App {
                 },
             ];
         }
-        let mut substances = load_substances();
+        let mut substances = crate::persistence::load_substances();
         if substances.is_empty() {
             substances = vec![
                 Substance {
@@ -147,6 +144,7 @@ impl App {
             filtered_substances: vec![],
             selected_substance_index: 0,
             experience_form: None,
+            status_message: String::new(),
         }
     }
 
@@ -154,21 +152,39 @@ impl App {
         self.screen = match self.screen {
             AppScreen::Home => AppScreen::Journal,
             AppScreen::Journal => AppScreen::SubstanceSearch,
-            AppScreen::SubstanceSearch => AppScreen::Home,
+            AppScreen::SubstanceSearch => AppScreen::ExperienceLogging,
+            AppScreen::ExperienceLogging => AppScreen::Home,
         };
     }
 
     pub fn prev_screen(&mut self) {
         self.screen = match self.screen {
-            AppScreen::Home => AppScreen::SubstanceSearch,
+            AppScreen::Home => AppScreen::ExperienceLogging,
             AppScreen::Journal => AppScreen::Home,
             AppScreen::SubstanceSearch => AppScreen::Journal,
+            AppScreen::ExperienceLogging => AppScreen::SubstanceSearch,
         };
     }
 }
 
 pub fn draw_ui(f: &mut Frame, app: &App) {
     let block = Block::default().borders(Borders::ALL).title("PsychonautWiki Journal");
+    let size = f.size();
+    let status_bar = Paragraph::new(app.status_message.as_str())
+        .style(Style::default().fg(Color::Yellow))
+        .block(Block::default().borders(Borders::ALL).title("Status"));
+    let main_area = Rect {
+        x: size.x,
+        y: size.y,
+        width: size.width,
+        height: size.height.saturating_sub(2),
+    };
+    let status_area = Rect {
+        x: size.x,
+        y: size.y + size.height.saturating_sub(2),
+        width: size.width,
+        height: 2,
+    };
     match app.screen {
         AppScreen::Home => {
             let paragraph = Paragraph::new("Home Screen").block(block);
@@ -186,7 +202,7 @@ pub fn draw_ui(f: &mut Frame, app: &App) {
                 .split(f.size());
 
             // Journal entry list (left)
-            let items: Vec<ListItem> = app.journal_entries.iter().enumerate().map(|(i, e)| {
+            let items: Vec<ListItem> = app.journal_entries.iter().enumerate().map(|(_i, e)| {
                 let mut title = e.title.clone();
                 if e.is_favorite {
                     title = format!("★ {}", title);
@@ -290,7 +306,7 @@ pub fn draw_ui(f: &mut Frame, app: &App) {
                 ("💊 Substance", &form.substance),
                 ("🗒️ Notes", &form.notes),
             ];
-            let mut items: Vec<ListItem> = fields.iter().enumerate().map(|(i, (label, value))| {
+            let items: Vec<ListItem> = fields.iter().enumerate().map(|(i, (label, value))| {
                 let prefix = if i == form.field_index { "👉 " } else { "   " };
                 ListItem::new(format!("{}{}: {}", prefix, label, value))
             }).collect();
@@ -312,44 +328,8 @@ pub fn draw_ui(f: &mut Frame, app: &App) {
                 .block(Block::default().borders(Borders::ALL).title("🆘 Help"));
             f.render_widget(help, chunks[1]);
         }
-            // Input box for search query
-            let input = Paragraph::new(app.substance_search_query.as_str())
-                .block(Block::default().borders(Borders::ALL).title("Search Substance"));
-            let chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .margin(1)
-                .constraints([
-                    Constraint::Length(3),
-                    Constraint::Min(5),
-                    Constraint::Length(7),
-                ].as_ref())
-                .split(f.size());
-            f.render_widget(input, chunks[0]);
-
-            // Filtered substance list
-            let items: Vec<ListItem> = app.filtered_substances.iter().map(|s| {
-                ListItem::new(s.name.clone())
-            }).collect();
-            let mut state = ListState::default();
-            state.select(Some(app.selected_substance_index));
-            let list = List::new(items)
-                .block(Block::default().borders(Borders::ALL).title("Results"))
-                .highlight_style(Style::default().bg(Color::Blue).fg(Color::White))
-                .highlight_symbol("→ ");
-            f.render_stateful_widget(list, chunks[1], &mut state);
-
-            // Substance details
-            let details = app.filtered_substances.get(app.selected_substance_index)
-                .map(|s| format!("{}\nClass: {}\n{}",
-                    s.name,
-                    s.class.clone().unwrap_or_default(),
-                    s.description.clone().unwrap_or_default()
-                ))
-                .unwrap_or_else(|| "No substance selected".to_string());
-            let details_paragraph = Paragraph::new(details)
-                .block(Block::default().borders(Borders::ALL).title("Details"));
-            f.render_widget(details_paragraph, chunks[2]);
-        }
     }
+    // Draw status bar at the bottom
+    f.render_widget(status_bar, status_area);
 }
 

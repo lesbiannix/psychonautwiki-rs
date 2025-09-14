@@ -1,5 +1,6 @@
 mod models;
 mod app;
+mod persistence;
 
 use app::{App, AppScreen, draw_ui};
 use crossterm::{event, execute, terminal};
@@ -23,9 +24,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let event::Event::Key(key) = event::read()? {
                 match key.code {
                     event::KeyCode::Char('q') => break,
-                    event::KeyCode::Right | event::KeyCode::Tab => app.next_screen(),
-                    event::KeyCode::Left => app.prev_screen(),
-                    event::KeyCode::Down | event::KeyCode::Tab => {
+                     event::KeyCode::Right | event::KeyCode::Tab => {
+                         app.next_screen();
+                         app.status_message = format!("Screen: {:?}", app.screen);
+                     },
+                     event::KeyCode::Left => {
+                         app.prev_screen();
+                         app.status_message = format!("Screen: {:?}", app.screen);
+                     },
+                    event::KeyCode::Down => {
                         match app.screen {
                             AppScreen::Journal => {
                                 if app.selected_journal_index + 1 < app.journal_entries.len() {
@@ -92,25 +99,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             },
                             'n' => {
                                 if let AppScreen::Journal = app.screen {
-                                    app.screen = AppScreen::ExperienceLogging;
-                                    app.experience_form = Some(app::ExperienceForm::new());
+                                 app.screen = AppScreen::ExperienceLogging;
+                                 app.experience_form = Some(app::ExperienceForm::new());
+                                 app.status_message = "Logging new experience...".to_string();
                                 }
                             },
                             'f' => {
                                 if let AppScreen::Journal = app.screen {
-                                    if let Some(entry) = app.journal_entries.get_mut(app.selected_journal_index) {
-                                        entry.is_favorite = !entry.is_favorite;
-                                    }
+                                 if let Some(entry) = app.journal_entries.get_mut(app.selected_journal_index) {
+                                     entry.is_favorite = !entry.is_favorite;
+                                     app.status_message = if entry.is_favorite { "Marked as favorite.".to_string() } else { "Unfavorited.".to_string() };
+                                 }
                                 }
                             },
                             'd' => {
                                 if let AppScreen::Journal = app.screen {
-                                    if app.journal_entries.len() > 0 {
-                                        app.journal_entries.remove(app.selected_journal_index);
-                                        if app.selected_journal_index >= app.journal_entries.len() && app.selected_journal_index > 0 {
-                                            app.selected_journal_index -= 1;
-                                        }
-                                    }
+                                 if app.journal_entries.len() > 0 {
+                                     app.journal_entries.remove(app.selected_journal_index);
+                                     if app.selected_journal_index >= app.journal_entries.len() && app.selected_journal_index > 0 {
+                                         app.selected_journal_index -= 1;
+                                     }
+                                     app.status_message = "Entry deleted.".to_string();
+                                 }
                                 }
                             },
                             'h' => app.screen = AppScreen::Home,
@@ -154,10 +164,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     timed_notes: vec![],
                                     consumers_with_ingestions: vec![],
                                 });
-                                app.screen = AppScreen::Journal;
-                            }
-                        }
-                    },
+                             app.screen = AppScreen::Journal;
+                             app.status_message = "Experience saved!".to_string();
+                         }
+                     }
+                 }
+             },
                      event::KeyCode::Backspace => {
                         match app.screen {
                             AppScreen::SubstanceSearch => {
@@ -181,12 +193,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                      event::KeyCode::Esc => {
                         match app.screen {
                             AppScreen::SubstanceSearch => {
-                                app.substance_search_query.clear();
-                                app.update_filtered_substances();
+                                 app.substance_search_query.clear();
+                                 app.update_filtered_substances();
+                                 app.status_message = "Search cleared.".to_string();
                             }
                             AppScreen::ExperienceLogging => {
-                                app.experience_form = None;
-                                app.screen = AppScreen::Journal;
+                                 app.experience_form = None;
+                                 app.screen = AppScreen::Journal;
+                                 app.status_message = "Logging canceled.".to_string();
                             }
                             _ => {
                                 app.screen = AppScreen::Home;
